@@ -46,10 +46,10 @@ namespace API
             // Add CORS policy
             services.AddCors(options =>
             {
-                options.AddPolicy("AllowAll",
+                options.AddPolicy("AllowLocalhost3000",
                     builder =>
                     {
-                        builder.AllowAnyOrigin()
+                        builder.WithOrigins("http://localhost:3000")
                                .AllowAnyHeader()
                                .AllowAnyMethod();
                     });
@@ -173,10 +173,7 @@ namespace API
             app.UseHsts();
 
             // Enable CORS
-            app.UseCors("AllowAll");
-            app.UseStaticFiles(); // Enable serving static files (wwwroot)
-
-            app.UseDirectoryBrowser(); // Enable directory browsing for static files (wwwroot)
+            app.UseCors("AllowLocalhost3000");
 
             app.UseRouting();
 
