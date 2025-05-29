@@ -2,6 +2,7 @@
 using API.Models;
 using BusinessLogicLayer.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Routing;
 using System;
 using System.Collections.Generic;
 
@@ -41,6 +42,22 @@ namespace API.Controllers
                 {
                     return ReturnError(string.Join(Environment.NewLine, errors));
                 }
+            }
+            catch (Exception ex)
+            {
+                return ReturnError(ex);
+            }
+        }
+
+        [Route("solveHistory")]
+        [HttpGet]
+        public IActionResult SolveHistory(int pageIndex = 1, int pageSize = 1, string matrixSearchKey = "")
+        {
+            try
+            {
+                int totalRow = 0;
+                var listHotel = _treasureHuntBS.GetPaging(pageIndex, pageSize, ref totalRow, "where Matrix like '%" + matrixSearchKey + "%'", "ModifiedDate desc");
+                return ReturnSuccess(new { listHotel, pageIndex, pageSize, totalRow });
             }
             catch (Exception ex)
             {
