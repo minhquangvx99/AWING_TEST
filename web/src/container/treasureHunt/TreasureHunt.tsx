@@ -309,8 +309,8 @@ const TreasureHuntes: FC<ITreasureHunt> = (props) => {
         if (expected.size > 0) {
           const missing = Array.from(expected).join(', ');
           Modal.error({
-            title: 'Lỗi',
-            content: `Ma trận chưa chứa đủ các số từ 1 đến ${p} (p). Thiếu: ${missing}`,
+            title: 'Không tìm được kho báu',
+            content: `Do ma trận chưa chứa đủ các số từ 1 đến ${p} (p). Thiếu: ${missing}.`,
           });
           return;
         }
