@@ -1,7 +1,7 @@
 import UilSearch from '@iconscout/react-unicons/dist/icons/uil-search';
 import UilTrashAlt from '@iconscout/react-unicons/dist/icons/uil-trash-alt';
 import UilMapMarkerEdit from '@iconscout/react-unicons/dist/icons/uil-map-marker-edit';
-import { FormInstance, Form, Tooltip, Input, Table, Modal, Skeleton, Empty } from 'antd';
+import { FormInstance, Form, Tooltip, Input, Table, Modal, Skeleton, Empty, InputNumber } from 'antd';
 import { Button } from 'components/buttons/Buttons';
 import { Heading } from 'components/heading/Heading';
 import { DataTableStyleWrap } from 'components/table/Style';
@@ -69,7 +69,6 @@ const TreasureHuntes: FC<ITreasureHunt> = (props) => {
   }, [state.page]);
 
   const getListTreasureHunt = () => {
-    // call API lấy list exam type
     let keyWord = state.matrixSearchKey.trim();
     setState({ ...state, matrixSearchKey: keyWord });
     dispatch(fetchListTreasureHuntPaging(state.page, 10, keyWord));
@@ -79,22 +78,19 @@ const TreasureHuntes: FC<ITreasureHunt> = (props) => {
     setState((state) => ({ ...state, page }));
   };
 
-  const save = () => {
-    // call API save
+  const save = (values: any) => {
     let treasureHuntItem = {
       Id: treasureHuntForEdit?.Id,
-      Name: formRef.current?.getFieldValue('Name')?.trim(),
-      Address: formRef.current?.getFieldValue('Address')?.trim(),
-      PhoneNumber: formRef.current?.getFieldValue('PhoneNumber'),
-      StarsNumber: formRef.current?.getFieldValue('StarsNumber'),
-      ManagerName: formRef.current?.getFieldValue('ManagerName')?.trim(),
+      NRow: values.rows,
+      MColumn: values.cols,
+      P: values.p,
+      Matrix: values.matrix.map((row: number[]) => row.map((cell: number) => cell))
     };
     dispatch(saveTreasureHunt(treasureHuntItem, state.page));
     !loading && closeModalConfirm();
     setState((state) => ({ ...state, searchKey: '', page: 1 }));
   };
-  const deleteCate = () => {
-    // call API delete
+  const deleteSolveHistory = () => {
     treasureHuntForEdit?.Id && dispatch(deleteTreasureHunt(treasureHuntForEdit?.Id, state.page));
     !loading && closeModalConfirm();
     setState((state) => ({ ...state, searchKey: '', page: 1 }));
@@ -103,6 +99,10 @@ const TreasureHuntes: FC<ITreasureHunt> = (props) => {
   const onChangeSearchBar = (e: ChangeEvent<HTMLInputElement>) => {
     setState({ ...state, matrixSearchKey: e.currentTarget.value });
   };
+
+  const [rows, setRows] = useState(0);
+  const [cols, setCols] = useState(0);
+  const [p, setP] = useState(0);
 
   const filter = () => {
     if (state.page === 1) {
@@ -303,17 +303,20 @@ const TreasureHuntes: FC<ITreasureHunt> = (props) => {
   };
 
   const closeModalConfirm = () => {
+    form.resetFields();
     setState((state) => ({ ...state, modalConfirmVisible: false }));
   };
 
-  const onSubmit = () => {
-    formRef.current?.submit();
-    if (formRef.current?.getFieldsError().length !== 0) {
-      if (state.typeConfirm === 1) {
-        save();
-      } else {
-        deleteCate();
+  const onSubmit = async () => {
+    if (state.typeConfirm === 1) {
+      try {
+        const values = await formRef.current?.validateFields();
+        save(values);
+      } catch (errorInfo) {
+        console.log('Validate Failed:', errorInfo);
       }
+    } else {
+      deleteSolveHistory();
     }
   };
 
@@ -355,7 +358,6 @@ const TreasureHuntes: FC<ITreasureHunt> = (props) => {
                 </div>
               </div>
 
-              {/* Table side */}
               <div className="ninjadasj-datatable">
                 <TableWrapper className="table-data-view table-responsive">
                   <Table
@@ -400,13 +402,12 @@ const TreasureHuntes: FC<ITreasureHunt> = (props) => {
             </Button>
             ,
             <Button
-              disabled={state.typeConfirm === 1 && (!nameInput || nameInput === '')}
               loading={loading}
               mergetype="primary"
               key="submit"
               onClick={onSubmit}
             >
-              {state.typeConfirm === 1 ? 'Save' : 'Yes'}
+              {state.typeConfirm === 1 ? 'Solve' : 'Yes'}
             </Button>
             ,
           </div>
@@ -414,7 +415,7 @@ const TreasureHuntes: FC<ITreasureHunt> = (props) => {
       >
         <div style={{ justifyItems: 'center', display: 'grid', marginBottom: 20 }}>
           <Heading as="h4">
-            {state.typeConfirm === 1 ? 'TreasureHunt Details' : 'Are you sure you want to delete the item?'}
+            {state.typeConfirm === 1 ? 'Tìm kho báu' : 'Are you sure you want to delete the item?'}
           </Heading>
         </div>
 
@@ -426,65 +427,127 @@ const TreasureHuntes: FC<ITreasureHunt> = (props) => {
           layout="vertical"
         >
           <Form.Item
-            name="Name"
-            label={
-              <span style={{ fontSize: 18, fontWeight: 600 }}>
-                {' '}
-                <span style={{ color: 'red' }}>*</span>Name
-              </span>
-            }
-            normalize={(value) => value.trimStart()}
+            label="Số hàng (n)"
+            name="rows"
+            rules={[
+              { required: true, message: 'Nhập số hàng' },
+              {
+                type: 'number',
+                min: 1,
+                max: 500,
+                message: 'n phải từ 1 đến 500',
+              },
+            ]}
           >
-            <Input />
+            <InputNumber
+              value={rows}
+              onChange={(val) => {
+                if (typeof val === 'number') {
+                  setRows(val);
+                  form.setFieldValue('rows', val);
+                }
+              }}
+              controls={false}
+            />
           </Form.Item>
+
           <Form.Item
-            name="Address"
-            label={
-              <span style={{ fontSize: 18, fontWeight: 600 }}>
-                {' '}
-                Address
-              </span>
-            }
-            normalize={(value) => value.trimStart()}
+            label="Số cột (m)"
+            name="cols"
+            rules={[
+              { required: true, message: 'Nhập số cột' },
+              {
+                type: 'number',
+                min: 1,
+                max: 500,
+                message: 'm phải từ 1 đến 500',
+              },
+            ]}
           >
-            <Input />
+            <InputNumber
+              value={cols}
+              onChange={(val) => {
+                if (typeof val === 'number') {
+                  setCols(val);
+                  form.setFieldValue('cols', val);
+                }
+              }}
+              controls={false}
+            />
           </Form.Item>
+
           <Form.Item
-            name="PhoneNumber"
-            label={
-              <span style={{ fontSize: 18, fontWeight: 600 }}>
-                {' '}
-                PhoneNumber
-              </span>
-            }
-            normalize={(value) => value.trimStart()}
+            label="Giá trị kho báu (p)"
+            name="p"
+            rules={[
+              { required: true, message: 'Nhập giá trị p' },
+              {
+                type: 'number',
+                min: 1,
+                max: rows * cols,
+                message: `p phải từ 1 đến n*m = ${rows * cols}`,
+              },
+            ]}
           >
-            <Input maxLength={10} />
+            <InputNumber
+              value={p}
+              onChange={(val) => {
+                if (typeof val === 'number') {
+                  setP(val);
+                  form.setFieldValue('p', val);
+                }
+              }}
+              controls={false}
+            />
           </Form.Item>
-          <Form.Item
-            name="StarsNumber"
-            label={
-              <span style={{ fontSize: 18, fontWeight: 600 }}>
-                {' '}
-                StarsNumber
-              </span>
-            }
-            normalize={(value) => value.trimStart()}
-          >
-            <Input maxLength={1} />
-          </Form.Item>
-          <Form.Item
-            name="ManagerName"
-            label={
-              <span style={{ fontSize: 18, fontWeight: 600 }}>
-                {' '}
-                ManagerName
-              </span>
-            }
-            normalize={(value) => value.trimStart()}
-          >
-            <Input />
-          </Form.Item>
+
+          {rows > 0 && cols > 0 && (
+            <>
+              <h4>Nhập ma trận ({rows} hàng × {cols} cột):</h4>
+              <div
+                style={{
+                  maxHeight: '400px',
+                  maxWidth: '100%',
+                  overflow: 'auto',
+                  border: '1px solid #eee',
+                  padding: '8px',
+                }}
+              >
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: `repeat(${cols}, minmax(60px, 1fr))`,
+                    gap: '8px',
+                    minWidth: cols * 60,
+                  }}
+                >
+                  {Array.from({ length: rows }).map((_, i) =>
+                    Array.from({ length: cols }).map((_, j) => (
+                      <Form.Item
+                        key={`matrix-${i}-${j}`}
+                        name={['matrix', i, j]}
+                        rules={[
+                          { required: true, message: 'Bắt buộc nhập' },
+                          {
+                            type: 'number',
+                            min: 1,
+                            max: p,
+                            message: `Giá trị phải từ 1 đến p = ${p}`,
+                          },
+                        ]}
+                        style={{ marginBottom: 0 }}
+                      >
+                        <InputNumber
+                          style={{ width: '100%' }}
+                          controls={false}
+                        />
+                      </Form.Item>
+                    ))
+                  )}
+                </div>
+              </div>
+            </>
+          )}
         </Form>
       </Modal>
     </div>

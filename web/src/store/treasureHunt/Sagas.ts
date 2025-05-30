@@ -72,15 +72,15 @@ function* saveTreasureHuntSaga(action: SaveTreasureHuntAction) {
     if (response.data && response.data.Success) {
       if (action.page === 1) yield put(fetchListTreasureHuntPaging(1, 10, ''))
       yield put(saveTreasureHuntSuccess())
-      openNotification('success', 'Success', 'Saved successfully')
+      openNotification('success', 'Success', 'Solve successfully')
     } else {
-      yield put(saveTreasureHuntErr('Save TreasureHunt Failed'));
-      openNotification('error', '', 'Save TreasureHunt Failed')
+      yield put(saveTreasureHuntErr('Solve Failed'));
+      openNotification('error', '', 'Solve Failed')
     }
   } catch (error) {
     console.log(error);
-    yield put(saveTreasureHuntErr('Save TreasureHunt Failed'));
-    openNotification('error', '', 'Save TreasureHunt Failed')
+    yield put(saveTreasureHuntErr('Solve Failed'));
+    openNotification('error', '', 'Solve Failed')
   }
 }
 
@@ -94,11 +94,12 @@ function* deleteTreasureHuntSaga(action: DeleteTreasureHuntAction) {
       yield put(deleteTreasureHuntSuccess())
       openNotification('success', 'Success', 'Deleted successfully')
     } else {
-      yield put(deleteTreasureHuntErr('Delete TreasureHunt Failed'));
+      yield put(deleteTreasureHuntErr('Delete Failed'));
+      openNotification('error', '', 'Delete Failed')
     }
   } catch (error) {
     console.log(error);
-    yield put(deleteTreasureHuntErr('Delete TreasureHunt Failed'));
+    yield put(deleteTreasureHuntErr('Delete Failed'));
   }
 }
 
