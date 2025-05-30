@@ -34,29 +34,12 @@ interface ITreasureHuntTableData {
 interface ITreasureHunt { }
 
 const TreasureHuntes: FC<ITreasureHunt> = (props) => {
-  const PageRoutes: Route[] = [
-    {
-      path: '',
-      breadcrumbName: 'TreasureHuntes',
-    },
-    {
-      path: '',
-      breadcrumbName: 'List',
-    },
-  ];
-
   const treasureHuntDataPaging = useSelector((states: RootState) => states.treasureHunt.dataPaging);
   const treasureHuntForEdit = useSelector((states: RootState) => states.treasureHunt.treasureHuntForEdit);
   const loading = useSelector((states: RootState) => states.treasureHunt.loading);
-  const topMenu = useSelector((state: RootState) => state.layout.topMenu);
   const dispatch = useDispatch<any>();
   const formRef = useRef<FormInstance<any>>(null);
   const [form] = Form.useForm();
-  const nameInput = Form.useWatch('Name', form);
-  const addressInput = Form.useWatch('Address', form);
-  const phoneNumberInput = Form.useWatch('PhoneNumber', form);
-  const starsNumberInput = Form.useWatch('StarsNumber', form);
-  const managerNameInput = Form.useWatch('ManagerName', form);
   const [state, setState] = useState({
     matrixSearchKey: '',
     modalConfirmVisible: false,
@@ -232,7 +215,7 @@ const TreasureHuntes: FC<ITreasureHunt> = (props) => {
       ),
       Path: (
         <pre className="custom-pre" title={Path || ''}>
-          {Path ? (Path.length > 10 ? `${Path.slice(0, 28)}...` : Path) : <span style={{ color: '#aaa' }}></span>}
+          {Path ? (Path.length > 10 ? `${Path.slice(0, 15)}...` : Path) : <span style={{ color: '#aaa' }}></span>}
         </pre>
       ),
       MinimumFuel: (
@@ -274,36 +257,36 @@ const TreasureHuntes: FC<ITreasureHunt> = (props) => {
   });
 
   useEffect(() => {
-    // state.typeConfirm === 1 &&
-    //   formRef.current?.setFieldsValue({
-    //     Name: treasureHuntForEdit?.Name,
-    //     Address: treasureHuntForEdit?.Address,
-    //     PhoneNumber: treasureHuntForEdit?.PhoneNumber,
-    //     StarsNumber: treasureHuntForEdit?.StarsNumber,
-    //     ManagerName: treasureHuntForEdit?.ManagerName,
-    //   });
+    state.typeConfirm === 1 &&
+      formRef.current?.setFieldsValue({
+        rows: treasureHuntForEdit?.NRow || 0,
+        cols: treasureHuntForEdit?.MColumn || 0,
+        p: treasureHuntForEdit?.P || 0,
+        matrix: treasureHuntForEdit?.Matrix ? JSON.parse(treasureHuntForEdit.Matrix) : [],
+      });
+    setCols(treasureHuntForEdit?.MColumn || 0);
+    setRows(treasureHuntForEdit?.NRow || 0);
+    setP(treasureHuntForEdit?.P || 0);
 
     state.typeConfirm === 2 &&
       formRef.current?.setFieldsValue({
-        Name: '',
-        Address: '',
-        PhoneNumber: '',
-        StarsNumber: '',
-        ManagerName: '',
+        rows: 0,
+        cols: 0,
+        p: 0,
+        matrix: [],
       });
   }, [treasureHuntForEdit, state.typeConfirm]);
 
-  const openModalConfirm = (typeConfirm: number, cate: TreasureHuntModel) => {
+  const openModalConfirm = (typeConfirm: number, treasureHunt: TreasureHuntModel) => {
     dispatch(
       updateTreasureHuntForEdit(
-        cate,
+        treasureHunt,
         setState((state) => ({ ...state, modalConfirmVisible: true, typeConfirm })),
       ),
     );
   };
 
   const closeModalConfirm = () => {
-    form.resetFields();
     setState((state) => ({ ...state, modalConfirmVisible: false }));
   };
 
