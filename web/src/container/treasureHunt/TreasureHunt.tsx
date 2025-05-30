@@ -1,0 +1,494 @@
+import UilSearch from '@iconscout/react-unicons/dist/icons/uil-search';
+import UilTrashAlt from '@iconscout/react-unicons/dist/icons/uil-trash-alt';
+import UilMapMarkerEdit from '@iconscout/react-unicons/dist/icons/uil-map-marker-edit';
+import { FormInstance, Form, Tooltip, Input, Table, Modal, Skeleton, Empty } from 'antd';
+import { Button } from 'components/buttons/Buttons';
+import { Heading } from 'components/heading/Heading';
+import { DataTableStyleWrap } from 'components/table/Style';
+import { themeColor } from 'config/theme/ThemeVariables';
+import { Main, TableWrapper } from 'container/Style';
+import { ChangeEvent, FC, ReactNode, Suspense, useEffect, useRef, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { Link } from 'react-router-dom';
+import { RootState } from 'store/RootReducer';
+import { fetchListTreasureHuntPaging, saveTreasureHunt, deleteTreasureHunt, updateTreasureHuntForEdit } from 'store/treasureHunt/Actions';
+import { TreasureHuntModel } from 'store/treasureHunt/Types';
+import { Route } from '@ant-design/pro-layout/es/typing';
+import { Cards } from 'components/cards/frame/CardsFrame';
+import moment from 'moment';
+interface ITreasureHuntTableData {
+  Id?: string;
+  key?: number;
+  NRow?: ReactNode;
+  MColumn?: ReactNode;
+  P?: ReactNode;
+  Matrix?: ReactNode;
+  Path?: ReactNode;
+  MinimumFuel?: ReactNode;
+  CreatedDate?: ReactNode;
+  ModifiedDate?: ReactNode;
+  action1?: ReactNode;
+  action2?: ReactNode;
+}
+
+interface ITreasureHunt { }
+
+const TreasureHuntes: FC<ITreasureHunt> = (props) => {
+  const PageRoutes: Route[] = [
+    {
+      path: '',
+      breadcrumbName: 'TreasureHuntes',
+    },
+    {
+      path: '',
+      breadcrumbName: 'List',
+    },
+  ];
+
+  const treasureHuntDataPaging = useSelector((states: RootState) => states.treasureHunt.dataPaging);
+  const treasureHuntForEdit = useSelector((states: RootState) => states.treasureHunt.treasureHuntForEdit);
+  const loading = useSelector((states: RootState) => states.treasureHunt.loading);
+  const topMenu = useSelector((state: RootState) => state.layout.topMenu);
+  const dispatch = useDispatch<any>();
+  const formRef = useRef<FormInstance<any>>(null);
+  const [form] = Form.useForm();
+  const nameInput = Form.useWatch('Name', form);
+  const addressInput = Form.useWatch('Address', form);
+  const phoneNumberInput = Form.useWatch('PhoneNumber', form);
+  const starsNumberInput = Form.useWatch('StarsNumber', form);
+  const managerNameInput = Form.useWatch('ManagerName', form);
+  const [state, setState] = useState({
+    matrixSearchKey: '',
+    modalConfirmVisible: false,
+    typeConfirm: 1,
+    page: 1,
+  });
+
+  useEffect(() => {
+    getListTreasureHunt();
+  }, [state.page]);
+
+  const getListTreasureHunt = () => {
+    // call API lấy list exam type
+    let keyWord = state.matrixSearchKey.trim();
+    setState({ ...state, matrixSearchKey: keyWord });
+    dispatch(fetchListTreasureHuntPaging(state.page, 10, keyWord));
+  };
+
+  const onChangePage = (page: number) => {
+    setState((state) => ({ ...state, page }));
+  };
+
+  const save = () => {
+    // call API save
+    let treasureHuntItem = {
+      Id: treasureHuntForEdit?.Id,
+      Name: formRef.current?.getFieldValue('Name')?.trim(),
+      Address: formRef.current?.getFieldValue('Address')?.trim(),
+      PhoneNumber: formRef.current?.getFieldValue('PhoneNumber'),
+      StarsNumber: formRef.current?.getFieldValue('StarsNumber'),
+      ManagerName: formRef.current?.getFieldValue('ManagerName')?.trim(),
+    };
+    dispatch(saveTreasureHunt(treasureHuntItem, state.page));
+    !loading && closeModalConfirm();
+    setState((state) => ({ ...state, searchKey: '', page: 1 }));
+  };
+  const deleteCate = () => {
+    // call API delete
+    treasureHuntForEdit?.Id && dispatch(deleteTreasureHunt(treasureHuntForEdit?.Id, state.page));
+    !loading && closeModalConfirm();
+    setState((state) => ({ ...state, searchKey: '', page: 1 }));
+  };
+
+  const onChangeSearchBar = (e: ChangeEvent<HTMLInputElement>) => {
+    setState({ ...state, matrixSearchKey: e.currentTarget.value });
+  };
+
+  const filter = () => {
+    if (state.page === 1) {
+      getListTreasureHunt();
+    } else {
+      setState((state) => ({ ...state, page: 1 }));
+    }
+  };
+
+  const dataTableColumn = [
+    {
+      title: () => {
+        return (
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontWeight: 550 }}>Id</div>
+          </div>
+        );
+      },
+      dataIndex: 'Id',
+      key: 'Id',
+      align: 'center' as const,
+      width: '5vw',
+    },
+    {
+      title: () => {
+        return <div style={{ fontWeight: 550, textAlign: 'center' }}>NRow</div>;
+      },
+      dataIndex: 'NRow',
+      align: 'center' as const,
+      key: 'NRow',
+      width: '85vw',
+    },
+    {
+      title: () => {
+        return <div style={{ fontWeight: 550, textAlign: 'center' }}>MColumn</div>;
+      },
+      dataIndex: 'MColumn',
+      align: 'center' as const,
+      key: 'MColumn',
+      width: '85vw',
+    },
+    {
+      title: () => {
+        return <div style={{ fontWeight: 550, textAlign: 'center' }}>P</div>;
+      },
+      dataIndex: 'P',
+      align: 'center' as const,
+      key: 'P',
+      width: '85vw',
+    },
+    {
+      title: () => {
+        return <div style={{ fontWeight: 550, textAlign: 'center' }}>Matrix</div>;
+      },
+      dataIndex: 'Matrix',
+      align: 'center' as const,
+      key: 'Matrix',
+      width: '85vw',
+    },
+    {
+      title: () => {
+        return <div style={{ fontWeight: 550, textAlign: 'center' }}>MinimumFuel</div>;
+      },
+      dataIndex: 'MinimumFuel',
+      align: 'center' as const,
+      key: 'MinimumFuel',
+      width: '85vw',
+    },
+    {
+      title: () => {
+        return <div style={{ fontWeight: 550, textAlign: 'center' }}>Path</div>;
+      },
+      dataIndex: 'Path',
+      align: 'center' as const,
+      key: 'Path',
+      width: '85vw',
+    },
+    {
+      title: () => {
+        return <div style={{ fontWeight: 550, textAlign: 'center' }}>CreatedDate</div>;
+      },
+      dataIndex: 'CreatedDate',
+      align: 'center' as const,
+      key: 'CreatedDate',
+      width: '85vw',
+    },
+    {
+      title: () => {
+        return <div style={{ fontWeight: 550, textAlign: 'center' }}>ModifiedDate</div>;
+      },
+      dataIndex: 'ModifiedDate',
+      align: 'center' as const,
+      key: 'ModifiedDate',
+      width: '85vw',
+    },
+    {
+      title: '',
+      dataIndex: 'action1',
+      key: 'action1',
+      width: '5vw',
+    },
+    {
+      title: '',
+      dataIndex: 'action2',
+      key: 'action2',
+      width: '5vw',
+    },
+  ];
+
+  let tableDataSource: ITreasureHuntTableData[] = [];
+  treasureHuntDataPaging?.listSolveHistory?.map((item) => {
+    const { Id, NRow, MColumn, P, Matrix, Path, MinimumFuel, CreatedDate, ModifiedDate } = item;
+    return tableDataSource.push({
+      key: Id,
+      Id: `${Id}`,
+      NRow: (
+        <pre className="custom-pre">{NRow}</pre>
+      ),
+      MColumn: (
+        <pre className="custom-pre">{MColumn}</pre>
+      ),
+      P: (
+        <pre className="custom-pre">{P}</pre>
+      ),
+      Matrix: (
+        <pre className="custom-pre">{Matrix}</pre>
+      ),
+      Path: (
+        <pre className="custom-pre" title={Path || ''}>
+          {Path ? (Path.length > 10 ? `${Path.slice(0, 28)}...` : Path) : <span style={{ color: '#aaa' }}></span>}
+        </pre>
+      ),
+      MinimumFuel: (
+        <pre className="custom-pre">{MinimumFuel}</pre>
+      ),
+      CreatedDate: (
+        <pre className="custom-pre">{moment(CreatedDate).format('HH:mm DD-MM-YYYY')}</pre>
+      ),
+      ModifiedDate: (
+        <pre className="custom-pre">{ModifiedDate ? moment(ModifiedDate).format('HH:mm DD-MM-YYYY') : ''}</pre>
+      ),
+      action1: (
+        <div className="table-actions">
+          <Tooltip title={'Giải lại'}>
+            <Link
+              className="edit"
+              to="#"
+              onClick={() => openModalConfirm(1, item)}
+            >
+              <UilMapMarkerEdit style={{ width: 20 }} color={themeColor['success-color']} />
+            </Link>
+          </Tooltip>
+        </div>
+      ),
+      action2: (
+        <div className="table-actions">
+          <Tooltip title={'Xóa'}>
+            <Link
+              className="delete"
+              to="#"
+              onClick={() => openModalConfirm(2, item)}
+            >
+              <UilTrashAlt style={{ width: 24 }} color={themeColor['danger-color']} />
+            </Link>
+          </Tooltip>
+        </div>
+      ),
+    });
+  });
+
+  useEffect(() => {
+    // state.typeConfirm === 1 &&
+    //   formRef.current?.setFieldsValue({
+    //     Name: treasureHuntForEdit?.Name,
+    //     Address: treasureHuntForEdit?.Address,
+    //     PhoneNumber: treasureHuntForEdit?.PhoneNumber,
+    //     StarsNumber: treasureHuntForEdit?.StarsNumber,
+    //     ManagerName: treasureHuntForEdit?.ManagerName,
+    //   });
+
+    state.typeConfirm === 2 &&
+      formRef.current?.setFieldsValue({
+        Name: '',
+        Address: '',
+        PhoneNumber: '',
+        StarsNumber: '',
+        ManagerName: '',
+      });
+  }, [treasureHuntForEdit, state.typeConfirm]);
+
+  const openModalConfirm = (typeConfirm: number, cate: TreasureHuntModel) => {
+    dispatch(
+      updateTreasureHuntForEdit(
+        cate,
+        setState((state) => ({ ...state, modalConfirmVisible: true, typeConfirm })),
+      ),
+    );
+  };
+
+  const closeModalConfirm = () => {
+    setState((state) => ({ ...state, modalConfirmVisible: false }));
+  };
+
+  const onSubmit = () => {
+    formRef.current?.submit();
+    if (formRef.current?.getFieldsError().length !== 0) {
+      if (state.typeConfirm === 1) {
+        save();
+      } else {
+        deleteCate();
+      }
+    }
+  };
+
+  return (
+    <div>
+      <Main>
+        <Suspense
+          fallback={
+            <Cards headless>
+              <Skeleton active />
+            </Cards>
+          }
+        >
+          <Cards border>
+            <DataTableStyleWrap>
+              {/* Filter side */}
+              <div className="ninjadash-datatable-filter">
+                <div className="ninjadash-datatable-filter__left">
+                  <div className="ninjadash-datatable-filter__input" style={{ minWidth: '50%' }}>
+                    <Input
+                      className="ninjadash-data-id"
+                      value={state.matrixSearchKey}
+                      allowClear
+                      onChange={onChangeSearchBar}
+                      onPressEnter={filter}
+                      placeholder='Nhập đẩy đủ ma trận theo định dạng: [[1,2,3],[4,5,6],[7,8,9]]'
+                      prefix={<UilSearch style={{ color: 'black' }} onClick={filter} />}
+                    />
+                  </div>
+                </div>
+                <div className="ninjadash-datatable-filter__action" style={{ display: 'flex' }}>
+                  <Button
+                    style={{ width: 130 }}
+                    mergetype="dark-success"
+                    onClick={() => openModalConfirm(1, {} as TreasureHuntModel)}
+                  >
+                    Tìm kho báu
+                  </Button>
+                </div>
+              </div>
+
+              {/* Table side */}
+              <div className="ninjadasj-datatable">
+                <TableWrapper className="table-data-view table-responsive">
+                  <Table
+                    bordered
+                    className="table-responsive"
+                    dataSource={tableDataSource}
+                    columns={dataTableColumn}
+                    pagination={
+                      tableDataSource.length > 0 && {
+                        pageSize: 10,
+                        onChange: onChangePage,
+                        total: treasureHuntDataPaging?.totalRow,
+                        current: state.page,
+                      }
+                    }
+                    loading={loading}
+                    locale={{
+                      emptyText: (
+                        <Empty
+                          image={Empty.PRESENTED_IMAGE_SIMPLE}
+                          description={state.matrixSearchKey.trim() !== '' ? 'Not found' : 'No data'}
+                        />
+                      ),
+                    }}
+                  />
+                </TableWrapper>
+              </div>
+            </DataTableStyleWrap>
+          </Cards>
+        </Suspense>
+      </Main>
+
+      <Modal
+        closable={false}
+        centered
+        open={state.modalConfirmVisible}
+        // onCancel={closeModalConfirm}
+        footer={
+          <div style={{ display: 'flex', justifyContent: 'center' }}>
+            <Button mergetype="primary" outlined key="back" onClick={closeModalConfirm}>
+              {state.typeConfirm === 1 ? 'Cancel' : 'No'}
+            </Button>
+            ,
+            <Button
+              disabled={state.typeConfirm === 1 && (!nameInput || nameInput === '')}
+              loading={loading}
+              mergetype="primary"
+              key="submit"
+              onClick={onSubmit}
+            >
+              {state.typeConfirm === 1 ? 'Save' : 'Yes'}
+            </Button>
+            ,
+          </div>
+        }
+      >
+        <div style={{ justifyItems: 'center', display: 'grid', marginBottom: 20 }}>
+          <Heading as="h4">
+            {state.typeConfirm === 1 ? 'TreasureHunt Details' : 'Are you sure you want to delete the item?'}
+          </Heading>
+        </div>
+
+        <Form
+          hidden={state.typeConfirm === 1 ? false : true}
+          form={form}
+          ref={formRef}
+          name="ninjadash-vertical-form"
+          layout="vertical"
+        >
+          <Form.Item
+            name="Name"
+            label={
+              <span style={{ fontSize: 18, fontWeight: 600 }}>
+                {' '}
+                <span style={{ color: 'red' }}>*</span>Name
+              </span>
+            }
+            normalize={(value) => value.trimStart()}
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item
+            name="Address"
+            label={
+              <span style={{ fontSize: 18, fontWeight: 600 }}>
+                {' '}
+                Address
+              </span>
+            }
+            normalize={(value) => value.trimStart()}
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item
+            name="PhoneNumber"
+            label={
+              <span style={{ fontSize: 18, fontWeight: 600 }}>
+                {' '}
+                PhoneNumber
+              </span>
+            }
+            normalize={(value) => value.trimStart()}
+          >
+            <Input maxLength={10} />
+          </Form.Item>
+          <Form.Item
+            name="StarsNumber"
+            label={
+              <span style={{ fontSize: 18, fontWeight: 600 }}>
+                {' '}
+                StarsNumber
+              </span>
+            }
+            normalize={(value) => value.trimStart()}
+          >
+            <Input maxLength={1} />
+          </Form.Item>
+          <Form.Item
+            name="ManagerName"
+            label={
+              <span style={{ fontSize: 18, fontWeight: 600 }}>
+                {' '}
+                ManagerName
+              </span>
+            }
+            normalize={(value) => value.trimStart()}
+          >
+            <Input />
+          </Form.Item>
+        </Form>
+      </Modal>
+    </div>
+  );
+};
+
+export default TreasureHuntes;

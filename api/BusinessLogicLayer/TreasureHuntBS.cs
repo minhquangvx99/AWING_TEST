@@ -19,6 +19,11 @@ namespace BusinessLogicLayer
 
         }
 
+        public IEnumerable<TreasureHuntEntity> GetSolveHistoryPaging(int pageIndex, int pageSize, string matrixSearchKey, ref int totalRow)
+        {
+            return _ctx.GetSolveHistoryPaging(pageIndex, pageSize, matrixSearchKey, ref totalRow);
+        }
+
         public TreasureHuntEntity FindMinimumFuel(int Id, int NRow, int MColumn, int P, int[][] Matrix)
         {
             Dictionary<int, List<(int x, int y)>> valuePositions = new Dictionary<int, List<(int x, int y)>>();
@@ -36,8 +41,16 @@ namespace BusinessLogicLayer
             var dp = new Dictionary<(int x, int y), (float cost, List<(int x, int y)> path)>();
 
             dp[(0, 0)] = (0, new List<(int, int)> { (0, 0) });
+            List<int> visitOrder;
+            if (Matrix[0][0] == 1)
+            {
+                visitOrder = Enumerable.Range(2, P - 1).ToList();
+            }
+            else
+            {
+                visitOrder = Enumerable.Range(1, P).ToList();
+            }
 
-            List<int> visitOrder = Enumerable.Range(1, P).ToList();
             foreach (int key in visitOrder)
             {
                 var next = new Dictionary<(int x, int y), (float cost, List<(int x, int y)> path)>();
@@ -63,6 +76,7 @@ namespace BusinessLogicLayer
             {
                 var min = dp.OrderBy(kvp => kvp.Value.cost).First();
                 var treasureHuntEntity = new TreasureHuntEntity();
+                var stringList = min.Value.path.Select(t => $"({t.Item1 + 1}:{t.Item2 + 1})").ToList();
                 if (Id == 0)
                 {
                     treasureHuntEntity = new TreasureHuntEntity
@@ -72,16 +86,17 @@ namespace BusinessLogicLayer
                         P = P,
                         Matrix = JsonSerializer.Serialize(Matrix),
                         MinimumFuel = min.Value.cost,
-                        Path = JsonSerializer.Serialize(min.Value.path),
+                        Path = JsonSerializer.Serialize(stringList),
                         CreatedDate = DateTime.Now,
-                    };
+                        ModifiedDate = DateTime.Now,
+                };
                     _ctx.Insert(treasureHuntEntity);
                 }
                 else
                 {
                     treasureHuntEntity = _ctx.GetById(Id);
                     treasureHuntEntity.MinimumFuel = min.Value.cost;
-                    treasureHuntEntity.Path = JsonSerializer.Serialize(min.Value.path);
+                    treasureHuntEntity.Path = JsonSerializer.Serialize(stringList);
                     treasureHuntEntity.ModifiedDate = DateTime.Now;
                     _ctx.Update(treasureHuntEntity);
                 }

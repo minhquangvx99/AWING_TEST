@@ -19,7 +19,6 @@ namespace API.Controllers
             _treasureHuntBS = treasureHuntBS;
         }
 
-        [Route("solve")]
         [HttpPost]
         public IActionResult Solve([FromBody] InputModel input)
         {
@@ -49,21 +48,53 @@ namespace API.Controllers
             }
         }
 
-        [Route("solveHistory")]
         [HttpGet]
-        public IActionResult SolveHistory(int pageIndex = 1, int pageSize = 1, string matrixSearchKey = "")
+        public IActionResult SolveHistory(int pageIndex = 1, int pageSize = 10, string matrixSearchKey = "")
         {
             try
             {
                 int totalRow = 0;
-                var listHotel = _treasureHuntBS.GetPaging(pageIndex, pageSize, ref totalRow, "where Matrix like '%" + matrixSearchKey + "%'", "ModifiedDate desc");
-                return ReturnSuccess(new { listHotel, pageIndex, pageSize, totalRow });
+                var listSolveHistory = _treasureHuntBS.GetSolveHistoryPaging(pageIndex, pageSize, matrixSearchKey, ref totalRow);
+                return ReturnSuccess(new { listSolveHistory, pageIndex, pageSize, totalRow });
             }
             catch (Exception ex)
             {
                 return ReturnError(ex);
             }
         }
-        
+
+        [Route("detail/{treasureHuntId}")]
+        [HttpGet]
+        public IActionResult getTreasureHuntById(int treasureHuntId)
+        {
+            try
+            {
+                var treasureHunt = _treasureHuntBS.GetById(treasureHuntId);
+                return ReturnSuccess(treasureHunt);
+            }
+            catch (Exception ex)
+            {
+                return ReturnError(ex);
+            }
+        }
+
+        [HttpDelete]
+        public IActionResult Delete(int treasureHuntId)
+        {
+            try
+            {
+                var treasureHunt = _treasureHuntBS.GetById(treasureHuntId);
+                if (treasureHunt == null) return ReturnError("Hotel does not exist");
+                bool rs = _treasureHuntBS.Delete(treasureHunt);
+                if (rs == false) return ReturnError("Delete Hotel failed");
+
+                return ReturnSuccess(new { }, "Deleted successfully");
+            }
+            catch (Exception ex)
+            {
+                return ReturnError(ex);
+            }
+        }
+
     }
 }
