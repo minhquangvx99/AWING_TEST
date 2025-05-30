@@ -70,7 +70,7 @@ function* saveTreasureHuntSaga(action: SaveTreasureHuntAction) {
       );
 
     if (response.data && response.data.Success) {
-      if (action.page === 1) yield put(fetchListTreasureHuntPaging(1, 10, ''))
+      yield put(fetchListTreasureHuntPaging(1, 10, ''))
       yield put(saveTreasureHuntSuccess())
       openNotification('success', 'Success', 'Solve successfully')
     } else {

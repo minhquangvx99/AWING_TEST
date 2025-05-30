@@ -211,11 +211,13 @@ const TreasureHuntes: FC<ITreasureHunt> = (props) => {
         <pre className="custom-pre">{P}</pre>
       ),
       Matrix: (
-        <pre className="custom-pre">{Matrix}</pre>
+        <pre className="custom-pre" title={Matrix || ''}>
+          {Matrix ? (Matrix.length > 40 ? `${Matrix.slice(0, 40)}...` : Matrix) : <span style={{ color: '#aaa' }}></span>}
+        </pre>
       ),
       Path: (
         <pre className="custom-pre" title={Path || ''}>
-          {Path ? (Path.length > 10 ? `${Path.slice(0, 15)}...` : Path) : <span style={{ color: '#aaa' }}></span>}
+          {Path ? (Path.length > 15 ? `${Path.slice(0, 15)}...` : Path) : <span style={{ color: '#aaa' }}></span>}
         </pre>
       ),
       MinimumFuel: (
@@ -294,6 +296,24 @@ const TreasureHuntes: FC<ITreasureHunt> = (props) => {
     if (state.typeConfirm === 1) {
       try {
         const values = await formRef.current?.validateFields();
+        const matrix = values.matrix;
+        const p = values.p;
+        const flat = matrix.flat();
+
+        const expected = new Set(Array.from({ length: p }, (_, i) => i + 1));
+
+        for (const num of flat) {
+          expected.delete(num);
+        }
+
+        if (expected.size > 0) {
+          const missing = Array.from(expected).join(', ');
+          Modal.error({
+            title: 'Lỗi',
+            content: `Ma trận chưa chứa đủ các số từ 1 đến ${p} (p). Thiếu: ${missing}`,
+          });
+          return;
+        }
         save(values);
       } catch (errorInfo) {
         console.log('Validate Failed:', errorInfo);
@@ -468,7 +488,7 @@ const TreasureHuntes: FC<ITreasureHunt> = (props) => {
                 type: 'number',
                 min: 1,
                 max: rows * cols,
-                message: `p phải từ 1 đến n*m = ${rows * cols}`,
+                message: `p phải từ 1 đến ${rows * cols} (n*m)`,
               },
             ]}
           >
@@ -515,7 +535,7 @@ const TreasureHuntes: FC<ITreasureHunt> = (props) => {
                             type: 'number',
                             min: 1,
                             max: p,
-                            message: `Giá trị phải từ 1 đến p = ${p}`,
+                            message: `Giá trị phải từ 1 đến ${p} (p)`,
                           },
                         ]}
                         style={{ marginBottom: 0 }}
